@@ -261,6 +261,7 @@ function Paywall({ course, user, onPay, onClose }) {
   const [step, setStep] = useState("info");
   const [error, setError] = useState(null);
   const txRef = "CRS-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+  const courseRef = useRef(course);
 
   function loadPaystack() {
     setError(null);
@@ -308,7 +309,7 @@ function Paywall({ course, user, onPay, onClose }) {
 
       setStep("success");
       // Auto-redirect to course after 1.5 seconds
-      setTimeout(() => onPay(), 1500);
+      setTimeout(() => onPay(courseRef.current), 1500);
     } catch (e) {
       setError("Payment recorded but access grant failed. Contact support with ref: " + ref);
       setStep("info");
@@ -365,7 +366,7 @@ function Paywall({ course, user, onPay, onClose }) {
             <div style={{ color: C.textSoft, fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
               You now have full access to<br /><strong>{course.title}</strong>
             </div>
-            <button onClick={onPay} style={{ width: "100%", background: course.color, color: "#fff", border: "none", borderRadius: 14, padding: "17px 0", fontWeight: 900, fontSize: 17, cursor: "pointer" }}>
+            <button onClick={() => onPay(courseRef.current)} style={{ width: "100%", background: course.color, color: "#fff", border: "none", borderRadius: 14, padding: "17px 0", fontWeight: 900, fontSize: 17, cursor: "pointer" }}>
               Start Day 1 →
             </button>
           </div>
@@ -696,7 +697,9 @@ export default function Coursia() {
       setUnlockedCourses(ul);
     }
     // Only show onboarding if not yet completed
-    if (!profile?.onboarded) {
+    // Check onboarded flag OR if profile has a proper name saved (not just email prefix)
+    const hasCompletedOnboarding = profile?.onboarded === true;
+    if (!hasCompletedOnboarding) {
       setScreen("onboarding");
     } else {
       setScreen("home");
@@ -719,9 +722,12 @@ export default function Coursia() {
 
   async function handleReportDone(ids) {
     setRecommendedIds(ids);
-    // Mark onboarding complete in Supabase so user goes straight to dashboard on next login
+    // Mark onboarding complete — user goes straight to dashboard on next login
     if (user) {
-      await supabase.from("profiles").update({ onboarded: true }).eq("id", user.id);
+      await supabase.from("profiles").update({ 
+        onboarded: true,
+        name: userName 
+      }).eq("id", user.id);
     }
     setScreen("home");
   }
@@ -732,8 +738,7 @@ export default function Coursia() {
     setShowPaywall(course);
   }
 
-  async function handlePaySuccess() {
-    const course = showPaywall;
+  async function handlePaySuccess(course) {
     setUnlockedCourses(u => ({ ...u, [course.id]: true }));
     setShowPaywall(null);
     setActiveCourse(course);
