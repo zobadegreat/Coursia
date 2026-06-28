@@ -307,6 +307,8 @@ function Paywall({ course, user, onPay, onClose }) {
       });
 
       setStep("success");
+      // Auto-redirect to course after 1.5 seconds
+      setTimeout(() => onPay(), 1500);
     } catch (e) {
       setError("Payment recorded but access grant failed. Contact support with ref: " + ref);
       setStep("info");
@@ -734,8 +736,9 @@ export default function Coursia() {
     const course = showPaywall;
     setUnlockedCourses(u => ({ ...u, [course.id]: true }));
     setShowPaywall(null);
-    // Small delay to let state update then start course
-    setTimeout(() => startCourse(course), 100);
+    setActiveCourse(course);
+    setActiveDay(Math.min((progress[course.id] || 0) + 1, 7));
+    setScreen("lesson");
   }
 
   function startCourse(course) {
