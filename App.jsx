@@ -1,93 +1,76 @@
 import { useState, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+// ── SUPABASE ───────────────────────────────────────────────────
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 // ── DESIGN TOKENS ──────────────────────────────────────────────
 const C = {
-  primary: "#0f0f1a",
-  accent: "#e8a020",
-  accentLight: "#fef3dc",
-  purple: "#5c35d4",
-  purpleLight: "#ede9fe",
-  green: "#059669",
-  greenLight: "#d1fae5",
-  red: "#dc2626",
-  redLight: "#fee2e2",
-  surface: "#ffffff",
-  bg: "#f5f6fa",
-  border: "#e8eaf0",
-  muted: "#94a3b8",
-  text: "#0f172a",
-  textSoft: "#475569",
+  primary: "#0f0f1a", accent: "#e8a020", accentLight: "#fef3dc",
+  purple: "#5c35d4", purpleLight: "#ede9fe", green: "#059669",
+  greenLight: "#d1fae5", red: "#dc2626", redLight: "#fee2e2",
+  surface: "#ffffff", bg: "#f5f6fa", border: "#e8eaf0",
+  muted: "#94a3b8", text: "#0f172a", textSoft: "#475569",
 };
 
-// ── FULL COURSE CATALOGUE ──────────────────────────────────────
+// ── COURSE CATALOGUE ───────────────────────────────────────────
 const COURSES = [
-  // 🤖 Tech & AI
-  { id: "ai-tools", icon: "🤖", title: "AI Tools Mastery", color: "#5c35d4", bg: "#ede9fe", cat: "Tech & AI", desc: "ChatGPT, Gemini, Claude — master AI tools for real daily tasks and work.", tags: ["tech", "professional", "student"] },
-  { id: "build-websites-ai", icon: "🌐", title: "Build Websites with AI", color: "#7c3aed", bg: "#f5f3ff", cat: "Tech & AI", desc: "Build real websites using AI tools like Lovable, Bolt, and prompting — no coding needed.", tags: ["tech", "entrepreneur", "student"] },
-  { id: "build-apps-ai", icon: "📱", title: "Build Apps with AI", color: "#6d28d9", bg: "#ede9fe", cat: "Tech & AI", desc: "Turn your app ideas into reality using AI builders — no programming background required.", tags: ["tech", "entrepreneur"] },
-  { id: "prompt-engineering", icon: "✨", title: "Prompt Engineering", color: "#4f46e5", bg: "#e0e7ff", cat: "Tech & AI", desc: "Learn to write powerful prompts that get the best results from any AI model.", tags: ["tech", "professional"] },
-  { id: "no-code-automation", icon: "⚡", title: "No-Code Automation", color: "#0891b2", bg: "#cffafe", cat: "Tech & AI", desc: "Automate repetitive tasks using Zapier, Make, and AI — no coding at all.", tags: ["tech", "professional", "entrepreneur"] },
-  { id: "ai-for-developers", icon: "💻", title: "AI for Developers", color: "#1d4ed8", bg: "#dbeafe", cat: "Tech & AI", desc: "Use GitHub Copilot, Claude, and Cursor to code faster and smarter.", tags: ["tech"] },
-  { id: "data-analysis-ai", icon: "📊", title: "Data Analysis with AI", color: "#0369a1", bg: "#e0f2fe", cat: "Tech & AI", desc: "Analyse data, build charts, and find insights using AI — no Excel expertise needed.", tags: ["tech", "professional"] },
-
-  // 💼 Business & Entrepreneurship
-  { id: "start-business", icon: "🚀", title: "Start a Business", color: "#e8a020", bg: "#fef3dc", cat: "Business", desc: "From idea to launch — how to validate, plan, and start your business the right way.", tags: ["entrepreneur", "lost", "professional"] },
-  { id: "grow-business", icon: "📈", title: "Grow & Scale a Business", color: "#d97706", bg: "#fef9c3", cat: "Business", desc: "Take your existing business to the next level with systems, marketing, and team building.", tags: ["entrepreneur"] },
-  { id: "ecommerce", icon: "🛒", title: "E-commerce & Importation", color: "#16a34a", bg: "#dcfce7", cat: "Business", desc: "Source products, sell online, and handle logistics — build a profitable trading business.", tags: ["entrepreneur", "lost"] },
-  { id: "dropshipping", icon: "📦", title: "Dropshipping Business", color: "#15803d", bg: "#d1fae5", cat: "Business", desc: "Sell products online without holding stock — a complete beginner's guide.", tags: ["entrepreneur", "student"] },
-  { id: "freelancing", icon: "🧑‍💻", title: "Freelancing & Client Work", color: "#0f766e", bg: "#ccfbf1", cat: "Business", desc: "Land clients, price your services, and build a sustainable freelance income.", tags: ["professional", "student", "lost"] },
-  { id: "business-plan", icon: "📋", title: "Write a Business Plan", color: "#b45309", bg: "#fef3c7", cat: "Business", desc: "Write a professional business plan that attracts investors and keeps you focused.", tags: ["entrepreneur", "student"] },
-  { id: "business-finance", icon: "💹", title: "Business Finance Basics", color: "#78350f", bg: "#fef9c3", cat: "Business", desc: "Understand cash flow, profit margins, pricing, and how to manage business money.", tags: ["entrepreneur", "professional"] },
-
-  // 💰 Money & Income
-  { id: "make-money-online", icon: "💰", title: "Make Money Online", color: "#059669", bg: "#d1fae5", cat: "Money & Income", desc: "Real, proven ways to earn money online — from side income to full-time revenue.", tags: ["student", "lost", "entrepreneur"] },
-  { id: "investing", icon: "📉", title: "Investing Basics", color: "#047857", bg: "#d1fae5", cat: "Money & Income", desc: "Stocks, ETFs, and smart investing habits — how to grow your money over time.", tags: ["professional", "entrepreneur"] },
-  { id: "personal-finance", icon: "🏦", title: "Personal Finance & Budgeting", color: "#065f46", bg: "#ecfdf5", cat: "Money & Income", desc: "Take control of your money — budgeting, saving, debt, and building wealth.", tags: ["student", "professional", "lost"] },
-  { id: "crypto", icon: "₿", title: "Crypto Fundamentals", color: "#f59e0b", bg: "#fef3c7", cat: "Money & Income", desc: "Understand blockchain, Bitcoin, and how to navigate crypto safely.", tags: ["tech", "entrepreneur"] },
-  { id: "affiliate-marketing", icon: "🔗", title: "Affiliate Marketing", color: "#10b981", bg: "#d1fae5", cat: "Money & Income", desc: "Earn commissions promoting other people's products — a scalable income stream.", tags: ["student", "entrepreneur", "lost"] },
-  { id: "digital-products", icon: "💿", title: "Sell Digital Products", color: "#6366f1", bg: "#e0e7ff", cat: "Money & Income", desc: "Create and sell ebooks, templates, courses, and tools — income while you sleep.", tags: ["entrepreneur", "professional"] },
-  { id: "side-hustle", icon: "🌙", title: "Side Hustle Playbook", color: "#8b5cf6", bg: "#ede9fe", cat: "Money & Income", desc: "Find, start, and grow a side hustle that fits your skills and schedule.", tags: ["professional", "student", "lost"] },
-
-  // 📱 Marketing & Content
-  { id: "digital-marketing", icon: "📣", title: "Digital Marketing", color: "#ea580c", bg: "#ffedd5", cat: "Marketing", desc: "SEO, ads, funnels, and strategy — market any business or brand online.", tags: ["entrepreneur", "professional", "student"] },
-  { id: "social-media-growth", icon: "📲", title: "Social Media Growth", color: "#db2777", bg: "#fce7f3", cat: "Marketing", desc: "Grow a real audience on Instagram, TikTok, X, and LinkedIn from scratch.", tags: ["entrepreneur", "student", "professional"] },
-  { id: "content-creation", icon: "🎬", title: "Content Creation", color: "#c026d3", bg: "#fae8ff", cat: "Marketing", desc: "Create content people actually watch, share, and buy from — across any platform.", tags: ["student", "entrepreneur"] },
-  { id: "youtube", icon: "▶️", title: "YouTube & Video", color: "#dc2626", bg: "#fee2e2", cat: "Marketing", desc: "Start a YouTube channel, grow subscribers, and monetise your videos.", tags: ["student", "entrepreneur", "lost"] },
-  { id: "copywriting", icon: "✍️", title: "Copywriting", color: "#7c3aed", bg: "#f5f3ff", cat: "Marketing", desc: "Write words that sell — landing pages, ads, emails, and product descriptions.", tags: ["professional", "entrepreneur"] },
-  { id: "email-marketing", icon: "📧", title: "Email Marketing", color: "#1d4ed8", bg: "#dbeafe", cat: "Marketing", desc: "Build an email list, write campaigns, and turn subscribers into buyers.", tags: ["entrepreneur", "professional"] },
-  { id: "brand-building", icon: "🏷", title: "Brand Building", color: "#0891b2", bg: "#cffafe", cat: "Marketing", desc: "Create a brand identity, tell your story, and build trust with your audience.", tags: ["entrepreneur", "professional"] },
-
-  // 🎓 Academic & Professional
-  { id: "academic-writing", icon: "📝", title: "Academic Writing & Research", color: "#1e40af", bg: "#dbeafe", cat: "Academic & Career", desc: "Essays, dissertations, journal articles — write with clarity and academic confidence.", tags: ["student", "professional"] },
-  { id: "journal-publishing", icon: "📰", title: "Journal Publishing", color: "#1d4ed8", bg: "#eff6ff", cat: "Academic & Career", desc: "How to write, submit, and get your research published in academic journals.", tags: ["student", "professional"] },
-  { id: "thesis-dissertation", icon: "🎓", title: "Thesis & Dissertation", color: "#3730a3", bg: "#e0e7ff", cat: "Academic & Career", desc: "Plan, write, and defend your thesis or dissertation with confidence.", tags: ["student"] },
-  { id: "cv-job-hunting", icon: "💼", title: "CV & Job Hunting", color: "#0f172a", bg: "#f1f5f9", cat: "Academic & Career", desc: "Write a standout CV, ace interviews, and land the job you actually want.", tags: ["student", "professional", "lost"] },
-  { id: "public-speaking", icon: "🎤", title: "Public Speaking", color: "#7c3aed", bg: "#ede9fe", cat: "Academic & Career", desc: "Speak with confidence in meetings, presentations, and on stage.", tags: ["professional", "student"] },
-  { id: "leadership", icon: "👑", title: "Leadership Skills", color: "#b45309", bg: "#fef3c7", cat: "Academic & Career", desc: "Lead teams, make decisions, and build influence in any organisation.", tags: ["professional", "entrepreneur"] },
-  { id: "project-management", icon: "📌", title: "Project Management", color: "#0369a1", bg: "#e0f2fe", cat: "Academic & Career", desc: "Plan, execute, and deliver projects on time — with or without a formal PM role.", tags: ["professional"] },
-  { id: "journalism-ai", icon: "🗞", title: "AI for Journalism & Media", color: "#1e3a5f", bg: "#dbeafe", cat: "Academic & Career", desc: "AI research, fact-checking, storytelling, and modern media production.", tags: ["professional", "student"] },
-
-  // 🧭 Life & Personal Development
-  { id: "find-direction", icon: "🧭", title: "Find Your Direction", color: "#db2777", bg: "#fce7f3", cat: "Life & Growth", desc: "Clarity exercises and purpose mapping to help you figure out what you truly want.", tags: ["lost", "student"] },
-  { id: "confidence-mindset", icon: "💪", title: "Confidence & Mindset", color: "#7c3aed", bg: "#f5f3ff", cat: "Life & Growth", desc: "Build the mental foundation to take action, overcome fear, and back yourself.", tags: ["lost", "student", "professional"] },
-  { id: "relationships", icon: "❤️", title: "Relationships & Communication", color: "#e11d48", bg: "#ffe4e6", cat: "Life & Growth", desc: "Build better relationships at work, home, and in life through communication skills.", tags: ["lost", "professional", "student"] },
-  { id: "productivity", icon: "⏱", title: "Productivity & Time Mastery", color: "#0891b2", bg: "#cffafe", cat: "Life & Growth", desc: "Own your time, beat procrastination, and consistently get the right things done.", tags: ["professional", "student", "entrepreneur"] },
-  { id: "health-habits", icon: "🏃", title: "Health & Wellness Habits", color: "#16a34a", bg: "#dcfce7", cat: "Life & Growth", desc: "Build sustainable habits around sleep, movement, and energy that actually stick.", tags: ["lost", "professional", "student"] },
-  { id: "parenting-digital", icon: "👨‍👩‍👧", title: "Parenting in the Digital Age", color: "#0f766e", bg: "#ccfbf1", cat: "Life & Growth", desc: "Guide your children through technology, social media, and the modern world.", tags: ["professional", "lost"] },
-
-  // 🎨 Creative Skills
-  { id: "graphic-design-ai", icon: "🎨", title: "Graphic Design with AI", color: "#c026d3", bg: "#fae8ff", cat: "Creative", desc: "Create stunning visuals, logos, and designs using Canva, Midjourney, and AI tools.", tags: ["student", "entrepreneur", "lost"] },
-  { id: "video-editing", icon: "🎞", title: "Video Editing", color: "#dc2626", bg: "#fee2e2", cat: "Creative", desc: "Edit professional videos for social media, business, or personal projects.", tags: ["student", "entrepreneur"] },
-  { id: "photography", icon: "📸", title: "Photography Basics", color: "#78350f", bg: "#fef3c7", cat: "Creative", desc: "Take better photos with any camera or phone — composition, lighting, and editing.", tags: ["student", "lost"] },
-  { id: "music-production", icon: "🎵", title: "Music Production", color: "#7c3aed", bg: "#ede9fe", cat: "Creative", desc: "Make beats, record, and produce music using AI tools and software.", tags: ["student", "lost"] },
-  { id: "storytelling-writing", icon: "📖", title: "Storytelling & Creative Writing", color: "#0f766e", bg: "#ccfbf1", cat: "Creative", desc: "Write stories, scripts, and content that captivates and connects with people.", tags: ["student", "professional", "lost"] },
-  { id: "fashion-business", icon: "👗", title: "Fashion & Style Business", color: "#db2777", bg: "#fce7f3", cat: "Creative", desc: "Turn your passion for fashion into a business — design, source, sell, and brand.", tags: ["entrepreneur", "student", "lost"] },
+  { id: "ai-tools", icon: "🤖", title: "AI Tools Mastery", color: "#5c35d4", bg: "#ede9fe", cat: "Tech & AI", desc: "ChatGPT, Gemini, Claude — master AI tools for real daily tasks and work." },
+  { id: "build-websites-ai", icon: "🌐", title: "Build Websites with AI", color: "#7c3aed", bg: "#f5f3ff", cat: "Tech & AI", desc: "Build real websites using AI tools like Lovable, Bolt, and prompting — no coding needed." },
+  { id: "build-apps-ai", icon: "📱", title: "Build Apps with AI", color: "#6d28d9", bg: "#ede9fe", cat: "Tech & AI", desc: "Turn your app ideas into reality using AI builders — no programming background required." },
+  { id: "prompt-engineering", icon: "✨", title: "Prompt Engineering", color: "#4f46e5", bg: "#e0e7ff", cat: "Tech & AI", desc: "Learn to write powerful prompts that get the best results from any AI model." },
+  { id: "no-code-automation", icon: "⚡", title: "No-Code Automation", color: "#0891b2", bg: "#cffafe", cat: "Tech & AI", desc: "Automate repetitive tasks using Zapier, Make, and AI — no coding at all." },
+  { id: "ai-for-developers", icon: "💻", title: "AI for Developers", color: "#1d4ed8", bg: "#dbeafe", cat: "Tech & AI", desc: "Use GitHub Copilot, Claude, and Cursor to code faster and smarter." },
+  { id: "data-analysis-ai", icon: "📊", title: "Data Analysis with AI", color: "#0369a1", bg: "#e0f2fe", cat: "Tech & AI", desc: "Analyse data, build charts, and find insights using AI — no Excel expertise needed." },
+  { id: "start-business", icon: "🚀", title: "Start a Business", color: "#e8a020", bg: "#fef3dc", cat: "Business", desc: "From idea to launch — how to validate, plan, and start your business the right way." },
+  { id: "grow-business", icon: "📈", title: "Grow & Scale a Business", color: "#d97706", bg: "#fef9c3", cat: "Business", desc: "Take your existing business to the next level with systems, marketing, and team building." },
+  { id: "ecommerce", icon: "🛒", title: "E-commerce & Importation", color: "#16a34a", bg: "#dcfce7", cat: "Business", desc: "Source products, sell online, and handle logistics — build a profitable trading business." },
+  { id: "dropshipping", icon: "📦", title: "Dropshipping Business", color: "#15803d", bg: "#d1fae5", cat: "Business", desc: "Sell products online without holding stock — a complete beginner's guide." },
+  { id: "freelancing", icon: "🧑‍💻", title: "Freelancing & Client Work", color: "#0f766e", bg: "#ccfbf1", cat: "Business", desc: "Land clients, price your services, and build a sustainable freelance income." },
+  { id: "business-plan", icon: "📋", title: "Write a Business Plan", color: "#b45309", bg: "#fef3c7", cat: "Business", desc: "Write a professional business plan that attracts investors and keeps you focused." },
+  { id: "business-finance", icon: "💹", title: "Business Finance Basics", color: "#78350f", bg: "#fef9c3", cat: "Business", desc: "Understand cash flow, profit margins, pricing, and how to manage business money." },
+  { id: "make-money-online", icon: "💰", title: "Make Money Online", color: "#059669", bg: "#d1fae5", cat: "Money & Income", desc: "Real, proven ways to earn money online — from side income to full-time revenue." },
+  { id: "investing", icon: "📉", title: "Investing Basics", color: "#047857", bg: "#d1fae5", cat: "Money & Income", desc: "Stocks, ETFs, and smart investing habits — how to grow your money over time." },
+  { id: "personal-finance", icon: "🏦", title: "Personal Finance & Budgeting", color: "#065f46", bg: "#ecfdf5", cat: "Money & Income", desc: "Take control of your money — budgeting, saving, debt, and building wealth." },
+  { id: "crypto", icon: "₿", title: "Crypto Fundamentals", color: "#f59e0b", bg: "#fef3c7", cat: "Money & Income", desc: "Understand blockchain, Bitcoin, and how to navigate crypto safely." },
+  { id: "affiliate-marketing", icon: "🔗", title: "Affiliate Marketing", color: "#10b981", bg: "#d1fae5", cat: "Money & Income", desc: "Earn commissions promoting other people's products — a scalable income stream." },
+  { id: "digital-products", icon: "💿", title: "Sell Digital Products", color: "#6366f1", bg: "#e0e7ff", cat: "Money & Income", desc: "Create and sell ebooks, templates, courses, and tools — income while you sleep." },
+  { id: "side-hustle", icon: "🌙", title: "Side Hustle Playbook", color: "#8b5cf6", bg: "#ede9fe", cat: "Money & Income", desc: "Find, start, and grow a side hustle that fits your skills and schedule." },
+  { id: "digital-marketing", icon: "📣", title: "Digital Marketing", color: "#ea580c", bg: "#ffedd5", cat: "Marketing", desc: "SEO, ads, funnels, and strategy — market any business or brand online." },
+  { id: "social-media-growth", icon: "📲", title: "Social Media Growth", color: "#db2777", bg: "#fce7f3", cat: "Marketing", desc: "Grow a real audience on Instagram, TikTok, X, and LinkedIn from scratch." },
+  { id: "content-creation", icon: "🎬", title: "Content Creation", color: "#c026d3", bg: "#fae8ff", cat: "Marketing", desc: "Create content people actually watch, share, and buy from — across any platform." },
+  { id: "youtube", icon: "▶️", title: "YouTube & Video", color: "#dc2626", bg: "#fee2e2", cat: "Marketing", desc: "Start a YouTube channel, grow subscribers, and monetise your videos." },
+  { id: "copywriting", icon: "✍️", title: "Copywriting", color: "#7c3aed", bg: "#f5f3ff", cat: "Marketing", desc: "Write words that sell — landing pages, ads, emails, and product descriptions." },
+  { id: "email-marketing", icon: "📧", title: "Email Marketing", color: "#1d4ed8", bg: "#dbeafe", cat: "Marketing", desc: "Build an email list, write campaigns, and turn subscribers into buyers." },
+  { id: "brand-building", icon: "🏷", title: "Brand Building", color: "#0891b2", bg: "#cffafe", cat: "Marketing", desc: "Create a brand identity, tell your story, and build trust with your audience." },
+  { id: "academic-writing", icon: "📝", title: "Academic Writing & Research", color: "#1e40af", bg: "#dbeafe", cat: "Academic & Career", desc: "Essays, dissertations, journal articles — write with clarity and academic confidence." },
+  { id: "journal-publishing", icon: "📰", title: "Journal Publishing", color: "#1d4ed8", bg: "#eff6ff", cat: "Academic & Career", desc: "How to write, submit, and get your research published in academic journals." },
+  { id: "thesis-dissertation", icon: "🎓", title: "Thesis & Dissertation", color: "#3730a3", bg: "#e0e7ff", cat: "Academic & Career", desc: "Plan, write, and defend your thesis or dissertation with confidence." },
+  { id: "cv-job-hunting", icon: "💼", title: "CV & Job Hunting", color: "#0f172a", bg: "#f1f5f9", cat: "Academic & Career", desc: "Write a standout CV, ace interviews, and land the job you actually want." },
+  { id: "public-speaking", icon: "🎤", title: "Public Speaking", color: "#7c3aed", bg: "#ede9fe", cat: "Academic & Career", desc: "Speak with confidence in meetings, presentations, and on stage." },
+  { id: "leadership", icon: "👑", title: "Leadership Skills", color: "#b45309", bg: "#fef3c7", cat: "Academic & Career", desc: "Lead teams, make decisions, and build influence in any organisation." },
+  { id: "project-management", icon: "📌", title: "Project Management", color: "#0369a1", bg: "#e0f2fe", cat: "Academic & Career", desc: "Plan, execute, and deliver projects on time — with or without a formal PM role." },
+  { id: "journalism-ai", icon: "🗞", title: "AI for Journalism & Media", color: "#1e3a5f", bg: "#dbeafe", cat: "Academic & Career", desc: "AI research, fact-checking, storytelling, and modern media production." },
+  { id: "find-direction", icon: "🧭", title: "Find Your Direction", color: "#db2777", bg: "#fce7f3", cat: "Life & Growth", desc: "Clarity exercises and purpose mapping to help you figure out what you truly want." },
+  { id: "confidence-mindset", icon: "💪", title: "Confidence & Mindset", color: "#7c3aed", bg: "#f5f3ff", cat: "Life & Growth", desc: "Build the mental foundation to take action, overcome fear, and back yourself." },
+  { id: "relationships", icon: "❤️", title: "Relationships & Communication", color: "#e11d48", bg: "#ffe4e6", cat: "Life & Growth", desc: "Build better relationships at work, home, and in life through communication skills." },
+  { id: "productivity", icon: "⏱", title: "Productivity & Time Mastery", color: "#0891b2", bg: "#cffafe", cat: "Life & Growth", desc: "Own your time, beat procrastination, and consistently get the right things done." },
+  { id: "health-habits", icon: "🏃", title: "Health & Wellness Habits", color: "#16a34a", bg: "#dcfce7", cat: "Life & Growth", desc: "Build sustainable habits around sleep, movement, and energy that actually stick." },
+  { id: "parenting-digital", icon: "👨‍👩‍👧", title: "Parenting in the Digital Age", color: "#0f766e", bg: "#ccfbf1", cat: "Life & Growth", desc: "Guide your children through technology, social media, and the modern world." },
+  { id: "graphic-design-ai", icon: "🎨", title: "Graphic Design with AI", color: "#c026d3", bg: "#fae8ff", cat: "Creative", desc: "Create stunning visuals, logos, and designs using Canva, Midjourney, and AI tools." },
+  { id: "video-editing", icon: "🎞", title: "Video Editing", color: "#dc2626", bg: "#fee2e2", cat: "Creative", desc: "Edit professional videos for social media, business, or personal projects." },
+  { id: "photography", icon: "📸", title: "Photography Basics", color: "#78350f", bg: "#fef3c7", cat: "Creative", desc: "Take better photos with any camera or phone — composition, lighting, and editing." },
+  { id: "music-production", icon: "🎵", title: "Music Production", color: "#7c3aed", bg: "#ede9fe", cat: "Creative", desc: "Make beats, record, and produce music using AI tools and software." },
+  { id: "storytelling-writing", icon: "📖", title: "Storytelling & Creative Writing", color: "#0f766e", bg: "#ccfbf1", cat: "Creative", desc: "Write stories, scripts, and content that captivates and connects with people." },
+  { id: "fashion-business", icon: "👗", title: "Fashion & Style Business", color: "#db2777", bg: "#fce7f3", cat: "Creative", desc: "Turn your passion for fashion into a business — design, source, sell, and brand." },
 ];
 
 const CATEGORIES = ["All", "Tech & AI", "Business", "Money & Income", "Marketing", "Academic & Career", "Life & Growth", "Creative"];
 
-// ── ONBOARDING ─────────────────────────────────────────────────
-const STAGES = [
+const ONBOARDING_STAGES = [
   {
     id: "who", q: "First, who are you?", sub: "This shapes your entire learning experience", type: "single",
     options: [
@@ -129,7 +112,6 @@ const STAGES = [
       { value: "60", label: "1 hour or more", icon: "🚀", desc: "All in" },
     ],
   },
-  { id: "name", q: "What should we call you?", sub: "Your name goes on your certificate", type: "name" },
 ];
 
 // ── HELPERS ────────────────────────────────────────────────────
@@ -150,6 +132,83 @@ function Toast({ msg, onClose }) {
   );
 }
 
+function Spinner({ color = C.accent, size = 48 }) {
+  return (
+    <>
+      <div style={{ width: size, height: size, border: `4px solid ${color}22`, borderTop: `4px solid ${color}`, borderRadius: "50%", animation: "spin 0.9s linear infinite", margin: "0 auto" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </>
+  );
+}
+
+// ── AUTH SCREEN ────────────────────────────────────────────────
+function AuthScreen({ onAuth }) {
+  const [mode, setMode] = useState("signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [sent, setSent] = useState(false);
+
+  async function handleSubmit() {
+    if (!email || !password || (mode === "signup" && !name)) return;
+    setLoading(true); setError(null);
+    try {
+      if (mode === "signup") {
+        const { data, error: e } = await supabase.auth.signUp({
+          email, password,
+          options: { data: { name } }
+        });
+        if (e) throw e;
+        if (data.user) onAuth(data.user, name, email);
+      } else {
+        const { data, error: e } = await supabase.auth.signInWithPassword({ email, password });
+        if (e) throw e;
+        if (data.user) onAuth(data.user, data.user.user_metadata?.name || email.split("@")[0], email);
+      }
+    } catch (e) {
+      setError(e.message || "Something went wrong. Try again.");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${C.primary} 0%, #1e0a4e 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: C.surface, borderRadius: 24, padding: "36px 28px", maxWidth: 420, width: "100%" }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontWeight: 900, fontSize: 28, color: C.accent, letterSpacing: -0.5, marginBottom: 6 }}>coursia</div>
+          <div style={{ fontWeight: 700, fontSize: 18, color: C.text }}>{mode === "signup" ? "Create your account" : "Welcome back"}</div>
+          <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>{mode === "signup" ? "Start your personalised learning journey" : "Continue where you left off"}</div>
+        </div>
+
+        {mode === "signup" && (
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name"
+            style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "13px 16px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, marginBottom: 10 }} />
+        )}
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" type="email"
+          style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "13px 16px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, marginBottom: 10 }} />
+        <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" type="password"
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "13px 16px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, marginBottom: 14 }} />
+
+        {error && <div style={{ background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
+
+        <button onClick={handleSubmit} disabled={loading}
+          style={{ width: "100%", background: C.accent, color: C.primary, border: "none", borderRadius: 12, padding: "15px 0", fontWeight: 900, fontSize: 16, cursor: loading ? "default" : "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+          {loading ? <Spinner color={C.primary} size={22} /> : mode === "signup" ? "Create Account →" : "Sign In →"}
+        </button>
+
+        <div style={{ textAlign: "center", fontSize: 14, color: C.muted }}>
+          {mode === "signup" ? "Already have an account? " : "Don't have an account? "}
+          <span onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setError(null); }} style={{ color: C.purple, fontWeight: 700, cursor: "pointer" }}>
+            {mode === "signup" ? "Sign in" : "Sign up"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── AUDIO PLAYER ───────────────────────────────────────────────
 function AudioPlayer({ text, color }) {
   const [playing, setPlaying] = useState(false);
@@ -158,23 +217,16 @@ function AudioPlayer({ text, color }) {
   const uttRef = useRef(null);
   const wordsRef = useRef(text.split(" ").length);
   const spokenRef = useRef(0);
-
   useEffect(() => () => { window.speechSynthesis.cancel(); }, []);
 
-  function stop() {
-    window.speechSynthesis.cancel();
-    setPlaying(false); setProgress(0); spokenRef.current = 0;
-  }
-
+  function stop() { window.speechSynthesis.cancel(); setPlaying(false); setProgress(0); spokenRef.current = 0; }
   function togglePlay() {
     if (playing) { window.speechSynthesis.pause(); setPlaying(false); return; }
     if (progress === 0 || progress >= 99) {
       spokenRef.current = 0; setProgress(0);
       const utt = new SpeechSynthesisUtterance(text);
       utt.rate = speed;
-      utt.onboundary = (e) => {
-        if (e.name === "word") { spokenRef.current++; setProgress(Math.min((spokenRef.current / wordsRef.current) * 100, 99)); }
-      };
+      utt.onboundary = (e) => { if (e.name === "word") { spokenRef.current++; setProgress(Math.min((spokenRef.current / wordsRef.current) * 100, 99)); } };
       utt.onend = () => { setProgress(100); setPlaying(false); };
       uttRef.current = utt;
       window.speechSynthesis.speak(utt);
@@ -194,7 +246,7 @@ function AudioPlayer({ text, color }) {
         </div>
         <button onClick={stop} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 18, cursor: "pointer" }}>⏹</button>
       </div>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 6 }}>
         {[0.75, 1, 1.5, 2].map(s => (
           <button key={s} onClick={() => setSpeed(s)} style={{ background: speed === s ? color : "rgba(255,255,255,0.08)", border: "none", color: speed === s ? "#fff" : "rgba(255,255,255,0.4)", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{s}x</button>
         ))}
@@ -205,15 +257,13 @@ function AudioPlayer({ text, color }) {
 }
 
 // ── PAYWALL ─────────────────────────────────────────────────────
-function Paywall({ course, userName, userEmail, onPay, onClose }) {
+function Paywall({ course, user, onPay, onClose }) {
   const [step, setStep] = useState("info");
   const [error, setError] = useState(null);
   const txRef = "CRS-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-  const PAYSTACK_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
 
   function loadPaystack() {
     setError(null);
-    // Load Paystack script dynamically
     if (window.PaystackPop) { openPaystack(); return; }
     const script = document.createElement("script");
     script.src = "https://js.paystack.co/v1/inline.js";
@@ -223,26 +273,44 @@ function Paywall({ course, userName, userEmail, onPay, onClose }) {
   }
 
   function openPaystack() {
-    if (!PAYSTACK_KEY) { setError("Payment not configured. Contact support."); return; }
+    const key = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+    if (!key) { setError("Payment not configured. Contact support."); return; }
     const handler = window.PaystackPop.setup({
-      key: PAYSTACK_KEY,
-      email: userEmail || "user@coursia.ng",
-      amount: 100000, // ₦1,000 in kobo
+      key,
+      email: user.email,
+      amount: 100000,
       currency: "NGN",
       ref: txRef,
-      metadata: {
-        course_id: course.id,
-        course_title: course.title,
-        user_name: userName,
+      metadata: { course_id: course.id, course_title: course.title, user_id: user.id },
+      onSuccess: async (transaction) => {
+        await recordPayment(transaction.reference);
       },
-      onSuccess: (transaction) => {
-        setStep("success");
-      },
-      onCancel: () => {
-        setStep("info");
-      },
+      onCancel: () => setStep("info"),
     });
     handler.openIframe();
+  }
+
+  async function recordPayment(ref) {
+    setStep("processing");
+    try {
+      // Record payment in Supabase
+      const { data: payment, error: pe } = await supabase.from("payments").insert({
+        user_id: user.id, course_id: course.id,
+        amount: 100000, currency: "NGN",
+        paystack_ref: ref, status: "success"
+      }).select().single();
+      if (pe) throw pe;
+
+      // Grant course access
+      await supabase.from("course_access").upsert({
+        user_id: user.id, course_id: course.id, payment_id: payment.id
+      });
+
+      setStep("success");
+    } catch (e) {
+      setError("Payment recorded but access grant failed. Contact support with ref: " + ref);
+      setStep("info");
+    }
   }
 
   return (
@@ -272,8 +340,7 @@ function Paywall({ course, userName, userEmail, onPay, onClose }) {
             ))}
           </div>
           {error && <div style={{ background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>{error}</div>}
-          <button onClick={loadPaystack}
-            style={{ width: "100%", background: C.accent, color: C.primary, border: "none", borderRadius: 14, padding: "17px 0", fontWeight: 900, fontSize: 17, cursor: "pointer", marginBottom: 12 }}>
+          <button onClick={loadPaystack} style={{ width: "100%", background: C.accent, color: C.primary, border: "none", borderRadius: 14, padding: "17px 0", fontWeight: 900, fontSize: 17, cursor: "pointer", marginBottom: 12 }}>
             Pay ₦1,000 · Unlock Course
           </button>
           <button onClick={onClose} style={{ width: "100%", background: "none", border: "none", color: C.muted, fontSize: 14, cursor: "pointer", fontWeight: 600 }}>Maybe later</button>
@@ -283,11 +350,16 @@ function Paywall({ course, userName, userEmail, onPay, onClose }) {
             <span style={{ fontSize: 11, color: C.muted }}>· 256-bit SSL</span>
           </div>
         </>}
+        {step === "processing" && (
+          <div style={{ textAlign: "center", padding: "50px 0" }}>
+            <Spinner color={C.accent} />
+            <div style={{ fontWeight: 700, fontSize: 16, color: C.text, marginTop: 20 }}>Confirming your payment...</div>
+          </div>
+        )}
         {step === "success" && (
           <div style={{ textAlign: "center", padding: "24px 0" }}>
             <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
             <div style={{ fontWeight: 900, fontSize: 22, color: C.text, marginBottom: 6 }}>Payment Successful!</div>
-            <div style={{ color: C.muted, fontSize: 14, marginBottom: 4 }}>₦1,000 · Ref: {txRef}</div>
             <div style={{ color: C.textSoft, fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
               You now have full access to<br /><strong>{course.title}</strong>
             </div>
@@ -302,40 +374,27 @@ function Paywall({ course, userName, userEmail, onPay, onClose }) {
 }
 
 // ── LESSON VIEW ────────────────────────────────────────────────
-function LessonView({ course, day, userName, onComplete, onBack }) {
+function LessonView({ course, day, user, userName, onComplete, onBack }) {
   const [phase, setPhase] = useState("loading");
   const [lesson, setLesson] = useState(null);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
   const [error, setError] = useState(null);
-
   useEffect(() => { fetchLesson(); }, [day]);
 
   async function fetchLesson() {
     setPhase("loading"); setLesson(null); setSelected(null); setAnswered(false); setError(null);
-    const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const key = import.meta.env.VITE_ANTHROPIC_API_KEY;
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6", max_tokens: 1000,
           system: `You are Coursia, a warm, practical AI learning coach. Write short daily lessons (150–180 words) that feel personal, actionable, and beginner-friendly.
-
 Respond ONLY in this exact JSON with no preamble or backticks:
-{
-  "title": "engaging lesson title",
-  "intro": "one warm sentence addressing the learner by name and what they'll learn today",
-  "body": "core lesson — 2 clear paragraphs, plain text, no markdown",
-  "tip": "one actionable pro tip they can use today",
-  "quiz": {
-    "question": "one clear question testing the key idea",
-    "options": ["A", "B", "C", "D"],
-    "correct": 0,
-    "explanation": "brief explanation of the correct answer"
-  }
-}`,
-          messages: [{ role: "user", content: `Write Day ${day} of 7 for the Coursia course "${course.title}". Learner's name: ${userName}. Make it feel personal, progressive, and motivating. Day ${day} should build naturally on earlier days.` }]
+{"title":"engaging lesson title","intro":"one warm sentence addressing the learner by name","body":"core lesson — 2 clear paragraphs, plain text, no markdown","tip":"one actionable pro tip they can use today","quiz":{"question":"one clear question","options":["A","B","C","D"],"correct":0,"explanation":"brief explanation"}}`,
+          messages: [{ role: "user", content: `Write Day ${day} of 7 for "${course.title}". Learner: ${userName}. Build naturally on earlier days.` }]
         })
       });
       const data = await res.json();
@@ -345,12 +404,29 @@ Respond ONLY in this exact JSON with no preamble or backticks:
     } catch (e) { setError("Could not load lesson. Please try again."); setPhase("error"); }
   }
 
+  async function handleComplete() {
+    // Save progress to Supabase
+    await supabase.from("progress").upsert({
+      user_id: user.id, course_id: course.id, day_completed: day,
+      last_updated: new Date().toISOString()
+    });
+    // Update total lessons on profile
+    await supabase.from("profiles").update({ total_lessons: supabase.rpc("increment") }).eq("id", user.id);
+    // If day 7, issue certificate
+    if (day >= 7) {
+      await supabase.from("certificates").upsert({
+        user_id: user.id, course_id: course.id, course_title: course.title
+      });
+    }
+    onComplete();
+  }
+
   const audioText = lesson ? `${lesson.title}. ${lesson.body} Pro tip: ${lesson.tip}` : "";
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "0 16px 60px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0 20px" }}>
-        <button onClick={onBack} style={{ background: C.bg, border: `1.5px solid ${C.border}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: C.textSoft, flexShrink: 0 }}>←</button>
+        <button onClick={onBack} style={{ background: C.bg, border: `1.5px solid ${C.border}`, borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: C.textSoft }}>←</button>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 800, fontSize: 15, color: C.text }}>{course.title}</div>
           <div style={{ fontSize: 12, color: C.muted }}>Day {day} of 7</div>
@@ -360,13 +436,7 @@ Respond ONLY in this exact JSON with no preamble or backticks:
       <ProgressBar value={(day / 7) * 100} color={course.color} />
       <div style={{ height: 22 }} />
 
-      {phase === "loading" && (
-        <div style={{ textAlign: "center", padding: "90px 0" }}>
-          <div style={{ width: 52, height: 52, border: `4px solid ${course.bg}`, borderTop: `4px solid ${course.color}`, borderRadius: "50%", animation: "spin 0.9s linear infinite", margin: "0 auto 20px" }} />
-          <div style={{ color: C.muted, fontSize: 15 }}>Building your Day {day} lesson...</div>
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        </div>
-      )}
+      {phase === "loading" && <div style={{ textAlign: "center", padding: "90px 0" }}><Spinner color={course.color} /><div style={{ color: C.muted, fontSize: 15, marginTop: 20 }}>Building your Day {day} lesson...</div></div>}
 
       {phase === "error" && (
         <div style={{ background: C.redLight, borderRadius: 16, padding: 28, textAlign: "center" }}>
@@ -425,9 +495,8 @@ Respond ONLY in this exact JSON with no preamble or backticks:
               </div>
             )}
           </div>
-
           {answered && (
-            <button onClick={onComplete} style={{ width: "100%", background: course.color, color: "#fff", border: "none", borderRadius: 14, padding: "18px 0", fontWeight: 900, fontSize: 17, cursor: "pointer", marginTop: 16 }}>
+            <button onClick={handleComplete} style={{ width: "100%", background: course.color, color: "#fff", border: "none", borderRadius: 14, padding: "18px 0", fontWeight: 900, fontSize: 17, cursor: "pointer", marginTop: 16 }}>
               {day < 7 ? `Complete Day ${day} →` : "Finish Course & Get Certificate 🎓"}
             </button>
           )}
@@ -465,38 +534,28 @@ function Certificate({ course, userName, onClose }) {
 function PersonalisationReport({ answers, userName, onDone }) {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
-
   useEffect(() => { fetchReport(); }, []);
 
   async function fetchReport() {
-    const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const key = import.meta.env.VITE_ANTHROPIC_API_KEY;
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6", max_tokens: 1000,
-          system: `You are Coursia's personalisation engine. Based on a learner's onboarding answers, generate a warm, specific, motivating personal learning report. Be direct and avoid generic language.
-
+          system: `You are Coursia's personalisation engine. Generate a warm, specific, motivating personal learning report.
 Respond ONLY in this exact JSON with no preamble or backticks:
-{
-  "headline": "short punchy headline about what this person can achieve (max 10 words)",
-  "profile": "2 sentences describing who they are and their situation based on answers",
-  "insight": "1 sentence about what's really holding them back and how to move past it",
-  "path": "1 sentence describing their ideal learning path on Coursia",
-  "courses": ["course_id_1", "course_id_2", "course_id_3"],
-  "motivation": "a short personal note addressed to them by name — warm, real, not cheesy (2–3 sentences)"
-}
-
-Available course IDs: ai-tools, build-websites-ai, build-apps-ai, prompt-engineering, no-code-automation, ai-for-developers, data-analysis-ai, start-business, grow-business, ecommerce, dropshipping, freelancing, business-plan, business-finance, make-money-online, investing, personal-finance, crypto, affiliate-marketing, digital-products, side-hustle, digital-marketing, social-media-growth, content-creation, youtube, copywriting, email-marketing, brand-building, academic-writing, journal-publishing, thesis-dissertation, cv-job-hunting, public-speaking, leadership, project-management, journalism-ai, find-direction, confidence-mindset, relationships, productivity, health-habits, parenting-digital, graphic-design-ai, video-editing, photography, music-production, storytelling-writing, fashion-business`,
-          messages: [{ role: "user", content: `Name: ${userName}\nWho: ${answers.who}\nGoal: ${answers.goal}\nChallenge: ${answers.challenge}\nDaily time: ${answers.time} minutes\n\nGenerate their personalised Coursia report with 3 best-fit course IDs.` }]
+{"headline":"short punchy headline (max 10 words)","profile":"2 sentences about who they are","insight":"1 sentence on what's holding them back","path":"1 sentence on their ideal learning path","courses":["id1","id2","id3"],"motivation":"warm personal note 2-3 sentences"}
+Available IDs: ai-tools,build-websites-ai,build-apps-ai,prompt-engineering,no-code-automation,ai-for-developers,data-analysis-ai,start-business,grow-business,ecommerce,dropshipping,freelancing,business-plan,business-finance,make-money-online,investing,personal-finance,crypto,affiliate-marketing,digital-products,side-hustle,digital-marketing,social-media-growth,content-creation,youtube,copywriting,email-marketing,brand-building,academic-writing,journal-publishing,thesis-dissertation,cv-job-hunting,public-speaking,leadership,project-management,journalism-ai,find-direction,confidence-mindset,relationships,productivity,health-habits,parenting-digital,graphic-design-ai,video-editing,photography,music-production,storytelling-writing,fashion-business`,
+          messages: [{ role: "user", content: `Name:${userName}\nWho:${answers.who}\nGoal:${answers.goal}\nChallenge:${answers.challenge}\nTime:${answers.time}min` }]
         })
       });
       const data = await res.json();
       const raw = data.content.map(b => b.text || "").join("");
       setReport(JSON.parse(raw.replace(/```json|```/g, "").trim()));
     } catch (e) {
-      setReport({ headline: "You're ready to level up", profile: "You have clear ambitions and the mindset to grow.", insight: "Starting with one focused course is the move.", path: "We've selected your best starting courses below.", courses: ["ai-tools", "start-business", "find-direction"], motivation: `${userName}, your journey starts today. One lesson at a time.` });
+      setReport({ headline: "You're ready to level up", profile: "You have clear ambitions and the right mindset.", insight: "Starting with one focused track builds momentum.", path: "Your best courses are selected below.", courses: ["ai-tools", "start-business", "find-direction"], motivation: `${userName}, your journey starts today. One lesson at a time.` });
     } finally { setLoading(false); }
   }
 
@@ -506,20 +565,10 @@ Available course IDs: ai-tools, build-websites-ai, build-apps-ai, prompt-enginee
     <div style={{ minHeight: "100vh", background: C.bg }}>
       <div style={{ background: `linear-gradient(135deg, ${C.primary} 0%, #1e0a4e 100%)`, padding: "48px 24px 72px", textAlign: "center" }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", letterSpacing: 2, marginBottom: 16 }}>YOUR PERSONAL LEARNING PLAN</div>
-        {loading ? (
-          <>
-            <div style={{ width: 52, height: 52, border: `4px solid rgba(255,255,255,0.1)`, borderTop: `4px solid ${C.accent}`, borderRadius: "50%", animation: "spin 0.9s linear infinite", margin: "0 auto 20px" }} />
-            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 15 }}>Analysing your answers, {userName}...</div>
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-          </>
-        ) : (
-          <>
-            <div style={{ fontWeight: 900, fontSize: 28, color: "#fff", lineHeight: 1.25, marginBottom: 10 }}>{report.headline}</div>
-            <div style={{ color: C.accent, fontSize: 14, fontWeight: 700 }}>Built personally for {userName}</div>
-          </>
+        {loading ? (<><Spinner color={C.accent} /><div style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, marginTop: 20 }}>Analysing your answers, {userName}...</div></>) : (
+          <><div style={{ fontWeight: 900, fontSize: 28, color: "#fff", lineHeight: 1.25, marginBottom: 10 }}>{report.headline}</div><div style={{ color: C.accent, fontSize: 14, fontWeight: 700 }}>Built personally for {userName}</div></>
         )}
       </div>
-
       {!loading && report && (
         <div style={{ maxWidth: 560, margin: "-32px auto 0", padding: "0 16px 60px" }}>
           <div style={{ background: C.surface, borderRadius: 20, padding: 24, marginBottom: 14, border: `1.5px solid ${C.border}`, boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
@@ -529,16 +578,14 @@ Available course IDs: ai-tools, build-websites-ai, build-apps-ai, prompt-enginee
               <strong style={{ color: C.accent }}>Key insight: </strong>{report.insight}
             </div>
           </div>
-
           <div style={{ background: C.primary, borderRadius: 20, padding: 24, marginBottom: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.35)", letterSpacing: 1.5, marginBottom: 12 }}>A NOTE FOR YOU</div>
             <p style={{ color: "#fff", fontSize: 15, lineHeight: 1.75, margin: 0, fontStyle: "italic" }}>{report.motivation}</p>
           </div>
-
           <div style={{ fontSize: 11, fontWeight: 800, color: C.muted, letterSpacing: 1.5, marginBottom: 14, paddingLeft: 4 }}>YOUR TOP 3 RECOMMENDED COURSES</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
             {recommended.map((c, i) => (
-              <div key={c.id} style={{ background: C.surface, borderRadius: 16, padding: "16px 18px", border: `1.5px solid ${i === 0 ? c.color + "55" : C.border}`, display: "flex", alignItems: "center", gap: 14, boxShadow: i === 0 ? `0 4px 16px ${c.color}22` : "none" }}>
+              <div key={c.id} style={{ background: C.surface, borderRadius: 16, padding: "16px 18px", border: `1.5px solid ${i === 0 ? c.color + "55" : C.border}`, display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{ width: 46, height: 46, borderRadius: 12, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{c.icon}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 800, fontSize: 15, color: C.text, marginBottom: 2 }}>{c.title}</div>
@@ -548,7 +595,6 @@ Available course IDs: ai-tools, build-websites-ai, build-apps-ai, prompt-enginee
               </div>
             ))}
           </div>
-
           <button onClick={() => onDone(report.courses)} style={{ width: "100%", background: C.accent, color: C.primary, border: "none", borderRadius: 14, padding: "18px 0", fontWeight: 900, fontSize: 18, cursor: "pointer" }}>
             Go to My Dashboard →
           </button>
@@ -559,9 +605,9 @@ Available course IDs: ai-tools, build-websites-ai, build-apps-ai, prompt-enginee
 }
 
 // ── COURSE CARD ────────────────────────────────────────────────
-function CourseCard({ course, done, unlocked, onStart, recommended }) {
-  const pct = done ? Math.round((done / 7) * 100) : 0;
-  const completed = done >= 7;
+function CourseCard({ course, daysDone, unlocked, onStart, recommended }) {
+  const pct = daysDone ? Math.round((daysDone / 7) * 100) : 0;
+  const completed = daysDone >= 7;
   return (
     <div onClick={onStart} style={{ background: C.surface, borderRadius: 18, padding: 20, cursor: "pointer", border: `1.5px solid ${recommended ? course.color + "44" : C.border}`, transition: "all 0.2s", boxShadow: recommended ? `0 4px 20px ${course.color}18` : "0 1px 6px rgba(0,0,0,0.04)", position: "relative" }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 8px 28px ${course.color}28`; e.currentTarget.style.transform = "translateY(-2px)"; }}
@@ -578,13 +624,13 @@ function CourseCard({ course, done, unlocked, onStart, recommended }) {
         <span style={{ fontSize: 11, color: C.muted }}>🎧 Audio</span>
         <span style={{ fontSize: 11, color: C.muted }}>🎓 Certificate</span>
       </div>
-      {done > 0 && !completed ? (
-        <><ProgressBar value={pct} color={course.color} /><div style={{ fontSize: 12, color: course.color, marginTop: 6, fontWeight: 700 }}>Day {done}/7 · {pct}% done</div></>
+      {daysDone > 0 && !completed ? (
+        <><ProgressBar value={pct} color={course.color} /><div style={{ fontSize: 12, color: course.color, marginTop: 6, fontWeight: 700 }}>Day {daysDone}/7 · {pct}% done</div></>
       ) : completed ? (
         <div style={{ background: C.greenLight, color: C.green, borderRadius: 10, padding: "10px 0", textAlign: "center", fontWeight: 800, fontSize: 13 }}>View Certificate 🏆</div>
       ) : (
         <div style={{ background: course.color, color: "#fff", borderRadius: 10, padding: "11px 0", textAlign: "center", fontWeight: 800, fontSize: 14 }}>
-          {unlocked ? "Resume →" : "Unlock · ₦1,000"}
+          {unlocked ? "Continue →" : "Unlock · ₦1,000"}
         </div>
       )}
     </div>
@@ -593,17 +639,15 @@ function CourseCard({ course, done, unlocked, onStart, recommended }) {
 
 // ── MAIN APP ───────────────────────────────────────────────────
 export default function Coursia() {
-  const [screen, setScreen] = useState("onboarding");
-  const [stage, setStage] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [screen, setScreen] = useState("loading");
+  const [user, setUser] = useState(null);
   const [userName, setUserName] = useState("");
-  const [nameInput, setNameInput] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [emailInput, setEmailInput] = useState("");
+  const [onboardStage, setOnboardStage] = useState(0);
+  const [answers, setAnswers] = useState({});
   const [activeCourse, setActiveCourse] = useState(null);
   const [activeDay, setActiveDay] = useState(1);
   const [progress, setProgress] = useState({});
-  const [unlocked, setUnlocked] = useState({});
+  const [unlockedCourses, setUnlockedCourses] = useState({});
   const [streak, setStreak] = useState(1);
   const [showPaywall, setShowPaywall] = useState(null);
   const [certCourse, setCertCourse] = useState(null);
@@ -611,20 +655,66 @@ export default function Coursia() {
   const [recommendedIds, setRecommendedIds] = useState([]);
   const [cat, setCat] = useState("All");
   const [search, setSearch] = useState("");
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  const currentStage = STAGES[stage];
+  // Check session on load
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserData(session.user);
+      } else {
+        setScreen("auth");
+      }
+    });
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) { setScreen("auth"); setUser(null); }
+    });
+  }, []);
 
-  function handleOption(val) {
-    const next = { ...answers, [currentStage.id]: val };
-    setAnswers(next);
-    if (stage < STAGES.length - 1) setStage(stage + 1);
+  async function loadUserData(u) {
+    setUser(u);
+    // Load profile
+    const { data: profile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
+    if (profile) {
+      setUserName(profile.name || u.email.split("@")[0]);
+      setStreak(profile.streak || 1);
+    }
+    // Load progress
+    const { data: prog } = await supabase.from("progress").select("*").eq("user_id", u.id);
+    if (prog) {
+      const p = {};
+      prog.forEach(r => { p[r.course_id] = r.day_completed; });
+      setProgress(p);
+    }
+    // Load unlocked courses
+    const { data: access } = await supabase.from("course_access").select("course_id").eq("user_id", u.id);
+    if (access) {
+      const ul = {};
+      access.forEach(r => { ul[r.course_id] = true; });
+      setUnlockedCourses(ul);
+    }
+    // Check if onboarding needed
+    if (!profile?.name || profile.name === u.email.split("@")[0]) {
+      setNeedsOnboarding(true);
+      setScreen("onboarding");
+    } else {
+      setScreen("home");
+    }
   }
 
-  function handleNameSubmit() {
-    if (!nameInput.trim() || !emailInput.trim()) return;
-    setUserName(nameInput.trim());
-    setUserEmail(emailInput.trim());
-    setScreen("report");
+  async function handleAuth(u, name, email) {
+    setUser(u);
+    setUserName(name);
+    setNeedsOnboarding(true);
+    setScreen("onboarding");
+  }
+
+  function handleOnboardOption(val) {
+    const stage = ONBOARDING_STAGES[onboardStage];
+    const next = { ...answers, [stage.id]: val };
+    setAnswers(next);
+    if (onboardStage < ONBOARDING_STAGES.length - 1) setOnboardStage(onboardStage + 1);
+    else setScreen("report");
   }
 
   function handleReportDone(ids) {
@@ -632,15 +722,15 @@ export default function Coursia() {
     setScreen("home");
   }
 
-  function handleCourseClick(course) {
-    if (progress[course.id] >= 7) { setCertCourse(course); return; }
-    if (unlocked[course.id]) { startCourse(course); return; }
+  async function handleCourseClick(course) {
+    if ((progress[course.id] || 0) >= 7) { setCertCourse(course); return; }
+    if (unlockedCourses[course.id]) { startCourse(course); return; }
     setShowPaywall(course);
   }
 
-  function handlePaySuccess() {
+  async function handlePaySuccess() {
     const course = showPaywall;
-    setUnlocked(u => ({ ...u, [course.id]: true }));
+    setUnlockedCourses(u => ({ ...u, [course.id]: true }));
     setShowPaywall(null);
     startCourse(course);
   }
@@ -651,68 +741,64 @@ export default function Coursia() {
     setScreen("lesson");
   }
 
-  function completeLesson() {
+  async function completeLesson() {
     const id = activeCourse.id;
     const done = (progress[id] || 0) + 1;
     setProgress(p => ({ ...p, [id]: done }));
     setStreak(s => s + 1);
+    // Update streak in DB
+    await supabase.from("profiles").update({ streak: streak + 1 }).eq("id", user.id);
     if (done >= 7) {
       setCertCourse(activeCourse);
       setScreen("home");
       setToast("🎓 Course complete! Certificate earned.");
     } else {
       setActiveDay(done + 1);
-      setToast(`Day ${done} done! 🔥 Keep going.`);
+      setToast(`Day ${done} done! 🔥`);
     }
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setUser(null); setScreen("auth");
   }
 
   const totalLessons = Object.values(progress).reduce((a, b) => a + b, 0);
   const inProgress = COURSES.filter(c => progress[c.id] > 0 && progress[c.id] < 7);
-
   const displayedCourses = COURSES.filter(c => {
     const matchCat = cat === "All" || c.cat === cat;
     const matchSearch = !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.desc.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
+  // ── LOADING ──
+  if (screen === "loading") return (
+    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${C.primary} 0%, #1e0a4e 100%)`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
+      <div style={{ fontWeight: 900, fontSize: 32, color: C.accent, letterSpacing: -0.5 }}>coursia</div>
+      <Spinner color={C.accent} />
+    </div>
+  );
+
+  // ── AUTH ──
+  if (screen === "auth") return <AuthScreen onAuth={handleAuth} />;
+
   // ── ONBOARDING ──
   if (screen === "onboarding") {
-    const s = STAGES[stage];
-    if (s.type === "name") return (
-      <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${C.primary} 0%, #1e0a4e 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-        <div style={{ background: C.surface, borderRadius: 24, padding: "36px 28px", maxWidth: 420, width: "100%" }}>
-          <ProgressBar value={100} color={C.accent} height={5} />
-          <div style={{ height: 28 }} />
-          <div style={{ fontSize: 38, textAlign: "center", marginBottom: 16 }}>✍️</div>
-          <div style={{ fontWeight: 900, fontSize: 22, color: C.text, textAlign: "center", marginBottom: 6 }}>{s.q}</div>
-          <div style={{ color: C.muted, fontSize: 14, textAlign: "center", marginBottom: 28 }}>{s.sub}</div>
-          <input value={nameInput} onChange={e => setNameInput(e.target.value)} onKeyDown={e => e.key === "Enter" && nameInput.trim() && emailInput.trim() && handleNameSubmit()} placeholder="Your first name"
-            style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, marginBottom: 12 }} autoFocus />
-          <input value={emailInput} onChange={e => setEmailInput(e.target.value)} onKeyDown={e => e.key === "Enter" && nameInput.trim() && emailInput.trim() && handleNameSubmit()} placeholder="Your email address" type="email"
-            style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, marginBottom: 14 }} />
-          <div style={{ fontSize: 12, color: C.muted, marginBottom: 16, textAlign: "center" }}>Your email is used for payment receipts and your certificate</div>
-          <button onClick={handleNameSubmit} disabled={!nameInput.trim() || !emailInput.trim()}
-            style={{ width: "100%", background: nameInput.trim() && emailInput.trim() ? C.accent : C.border, color: nameInput.trim() && emailInput.trim() ? C.primary : C.muted, border: "none", borderRadius: 12, padding: "15px 0", fontWeight: 900, fontSize: 16, cursor: nameInput.trim() && emailInput.trim() ? "pointer" : "default" }}>
-            Build My Plan →
-          </button>
-        </div>
-      </div>
-    );
-
+    const s = ONBOARDING_STAGES[onboardStage];
     return (
       <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${C.primary} 0%, #1e0a4e 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
         <div style={{ background: C.surface, borderRadius: 24, padding: "32px 24px", maxWidth: 440, width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.muted }}>{stage + 1} of {STAGES.length}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>{Math.round((stage / (STAGES.length - 1)) * 100)}%</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.muted }}>{onboardStage + 1} of {ONBOARDING_STAGES.length}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.purple }}>{Math.round((onboardStage / (ONBOARDING_STAGES.length - 1)) * 100)}%</span>
           </div>
-          <ProgressBar value={(stage / (STAGES.length - 1)) * 100} color={C.purple} height={5} />
+          <ProgressBar value={(onboardStage / (ONBOARDING_STAGES.length - 1)) * 100} color={C.purple} height={5} />
           <div style={{ height: 24 }} />
           <div style={{ fontWeight: 900, fontSize: 22, color: C.text, marginBottom: 6 }}>{s.q}</div>
           <div style={{ color: C.muted, fontSize: 14, marginBottom: 22 }}>{s.sub}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {s.options.map(opt => (
-              <button key={opt.value} onClick={() => handleOption(opt.value)}
+              <button key={opt.value} onClick={() => handleOnboardOption(opt.value)}
                 style={{ background: C.bg, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", fontWeight: 700, fontSize: 14, color: C.text, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, transition: "all 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.border = `1.5px solid ${C.purple}`; e.currentTarget.style.background = C.purpleLight; }}
                 onMouseLeave={e => { e.currentTarget.style.border = `1.5px solid ${C.border}`; e.currentTarget.style.background = C.bg; }}>
@@ -729,8 +815,10 @@ export default function Coursia() {
     );
   }
 
+  // ── REPORT ──
   if (screen === "report") return <PersonalisationReport answers={answers} userName={userName} onDone={handleReportDone} />;
 
+  // ── LESSON ──
   if (screen === "lesson" && activeCourse) return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
@@ -740,7 +828,7 @@ export default function Coursia() {
           <span>🔥</span><span style={{ fontWeight: 700, color: "#ea580c", fontSize: 13 }}>{streak}</span>
         </div>
       </div>
-      <LessonView course={activeCourse} day={activeDay} userName={userName} onComplete={completeLesson} onBack={() => setScreen("home")} />
+      <LessonView course={activeCourse} day={activeDay} user={user} userName={userName} onComplete={completeLesson} onBack={() => setScreen("home")} />
       {certCourse && <Certificate course={certCourse} userName={userName} onClose={() => setCertCourse(null)} />}
     </div>
   );
@@ -750,7 +838,7 @@ export default function Coursia() {
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
       {certCourse && <Certificate course={certCourse} userName={userName} onClose={() => setCertCourse(null)} />}
-      {showPaywall && <Paywall course={showPaywall} userName={userName} userEmail={userEmail} onPay={handlePaySuccess} onClose={() => setShowPaywall(null)} />}
+      {showPaywall && <Paywall course={showPaywall} user={user} onPay={handlePaySuccess} onClose={() => setShowPaywall(null)} />}
 
       {/* Nav */}
       <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
@@ -759,14 +847,13 @@ export default function Coursia() {
           <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff7ed", border: `1.5px solid #fed7aa`, borderRadius: 20, padding: "4px 12px" }}>
             <span>🔥</span><span style={{ fontWeight: 700, color: "#ea580c", fontSize: 13 }}>{streak} day</span>
           </div>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: C.purple, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 15 }}>
+          <div onClick={handleSignOut} title="Sign out" style={{ width: 36, height: 36, borderRadius: "50%", background: C.purple, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 15, cursor: "pointer" }}>
             {userName.charAt(0).toUpperCase()}
           </div>
         </div>
       </div>
 
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px 80px" }}>
-
         {/* Hero */}
         <div style={{ background: `linear-gradient(135deg, ${C.primary} 0%, #1e0a4e 100%)`, borderRadius: 22, padding: "28px 24px", marginBottom: 28, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: "50%", background: `${C.accent}18` }} />
@@ -774,10 +861,10 @@ export default function Coursia() {
             <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", letterSpacing: 1.5, marginBottom: 8 }}>WELCOME BACK</div>
             <div style={{ fontWeight: 900, fontSize: 24, color: "#fff", marginBottom: 8 }}>Hey {userName} 👋</div>
             <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 14, marginBottom: 24, lineHeight: 1.65 }}>
-              {totalLessons === 0 ? "Your personalised plan is ready. Pick a course and begin your first lesson." : `${totalLessons} lesson${totalLessons !== 1 ? "s" : ""} completed. Every lesson brings you closer.`}
+              {totalLessons === 0 ? "Your personalised plan is ready. Pick a course and begin." : `${totalLessons} lesson${totalLessons !== 1 ? "s" : ""} completed. Keep going — consistency is everything.`}
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              {[{ l: "Lessons", v: totalLessons }, { l: "Streak", v: `${streak}d` }, { l: "Unlocked", v: Object.keys(unlocked).length }, { l: "Completed", v: Object.values(progress).filter(d => d >= 7).length }].map(s => (
+              {[{ l: "Lessons", v: totalLessons }, { l: "Streak", v: `${streak}d` }, { l: "Unlocked", v: Object.keys(unlockedCourses).length }, { l: "Completed", v: Object.values(progress).filter(d => d >= 7).length }].map(s => (
                 <div key={s.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 14px", textAlign: "center", flex: 1 }}>
                   <div style={{ fontWeight: 900, fontSize: 18, color: "#fff" }}>{s.v}</div>
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{s.l}</div>
@@ -808,23 +895,21 @@ export default function Coursia() {
         )}
 
         {/* Recommended */}
-        {recommendedIds.length > 0 && inProgress.length === 0 && Object.keys(unlocked).length === 0 && (
+        {recommendedIds.length > 0 && inProgress.length === 0 && Object.keys(unlockedCourses).length === 0 && (
           <div style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 800, fontSize: 17, color: C.text, marginBottom: 4 }}>Recommended for You</div>
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>Based on your personalised plan</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: 14 }}>
               {COURSES.filter(c => recommendedIds.includes(c.id)).slice(0, 3).map(c => (
-                <CourseCard key={c.id} course={c} done={progress[c.id] || 0} unlocked={unlocked[c.id]} onStart={() => handleCourseClick(c)} recommended />
+                <CourseCard key={c.id} course={c} daysDone={progress[c.id] || 0} unlocked={unlockedCourses[c.id]} onStart={() => handleCourseClick(c)} recommended />
               ))}
             </div>
           </div>
         )}
 
         {/* Search */}
-        <div style={{ marginBottom: 16 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search 47 courses..."
-            style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "12px 16px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, background: C.surface }} />
-        </div>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search 47 courses..."
+          style={{ width: "100%", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "12px 16px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", color: C.text, background: C.surface, marginBottom: 14 }} />
 
         {/* Category filter */}
         <div style={{ display: "flex", gap: 8, marginBottom: 18, overflowX: "auto", paddingBottom: 4 }}>
@@ -833,15 +918,13 @@ export default function Coursia() {
           ))}
         </div>
 
-        {/* Count */}
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>
           {displayedCourses.length} course{displayedCourses.length !== 1 ? "s" : ""} {cat !== "All" ? `in ${cat}` : "available"} · ₦1,000 each
         </div>
 
-        {/* Grid */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: 14 }}>
           {displayedCourses.map(c => (
-            <CourseCard key={c.id} course={c} done={progress[c.id] || 0} unlocked={unlocked[c.id]} onStart={() => handleCourseClick(c)} />
+            <CourseCard key={c.id} course={c} daysDone={progress[c.id] || 0} unlocked={unlockedCourses[c.id]} onStart={() => handleCourseClick(c)} />
           ))}
         </div>
 
