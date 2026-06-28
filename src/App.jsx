@@ -696,9 +696,10 @@ export default function Coursia() {
       access.forEach(r => { ul[r.course_id] = true; });
       setUnlockedCourses(ul);
     }
-    // Only show onboarding if not yet completed
-    // Check onboarded flag OR if profile has a proper name saved (not just email prefix)
-    const hasCompletedOnboarding = profile?.onboarded === true;
+    // Check onboarding status — use both DB flag and localStorage as backup
+    const dbOnboarded = profile?.onboarded === true;
+    const localOnboarded = localStorage.getItem("coursia_onboarded_" + u.id) === "true";
+    const hasCompletedOnboarding = dbOnboarded || localOnboarded;
     if (!hasCompletedOnboarding) {
       setScreen("onboarding");
     } else {
@@ -722,12 +723,17 @@ export default function Coursia() {
 
   async function handleReportDone(ids) {
     setRecommendedIds(ids);
-    // Mark onboarding complete — user goes straight to dashboard on next login
+    // Mark onboarding complete — save to both DB and localStorage as backup
     if (user) {
-      await supabase.from("profiles").update({ 
-        onboarded: true,
-        name: userName 
-      }).eq("id", user.id);
+      localStorage.setItem("coursia_onboarded_" + user.id, "true");
+      try {
+        await supabase.from("profiles").update({ 
+          onboarded: true,
+          name: userName 
+        }).eq("id", user.id);
+      } catch(e) {
+        console.error("Could not save onboarded flag:", e);
+      }
     }
     setScreen("home");
   }
