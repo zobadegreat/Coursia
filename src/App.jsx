@@ -693,9 +693,8 @@ export default function Coursia() {
       access.forEach(r => { ul[r.course_id] = true; });
       setUnlockedCourses(ul);
     }
-    // Check if onboarding needed
-    if (!profile?.name || profile.name === u.email.split("@")[0]) {
-      setNeedsOnboarding(true);
+    // Only show onboarding if not yet completed
+    if (!profile?.onboarded) {
       setScreen("onboarding");
     } else {
       setScreen("home");
@@ -705,7 +704,6 @@ export default function Coursia() {
   async function handleAuth(u, name, email) {
     setUser(u);
     setUserName(name);
-    setNeedsOnboarding(true);
     setScreen("onboarding");
   }
 
@@ -717,8 +715,12 @@ export default function Coursia() {
     else setScreen("report");
   }
 
-  function handleReportDone(ids) {
+  async function handleReportDone(ids) {
     setRecommendedIds(ids);
+    // Mark onboarding complete in Supabase so user goes straight to dashboard on next login
+    if (user) {
+      await supabase.from("profiles").update({ onboarded: true }).eq("id", user.id);
+    }
     setScreen("home");
   }
 
@@ -732,7 +734,8 @@ export default function Coursia() {
     const course = showPaywall;
     setUnlockedCourses(u => ({ ...u, [course.id]: true }));
     setShowPaywall(null);
-    startCourse(course);
+    // Small delay to let state update then start course
+    setTimeout(() => startCourse(course), 100);
   }
 
   function startCourse(course) {
